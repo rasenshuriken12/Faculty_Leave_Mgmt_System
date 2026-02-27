@@ -1,0 +1,405 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Faculty Leave Management System</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        body { font-family: 'Inter', sans-serif; }
+        .sidebar-link.active {
+            background-color: rgba(59, 130, 246, 0.1);
+            color: #2563eb;
+            border-right: 4px solid #2563eb;
+        }
+        [v-cloak] { display: none; }
+    </style>
+</head>
+<body class="bg-gray-50 text-gray-900 overflow-hidden h-screen flex flex-col">
+
+    <a href="#main-dashboard" class="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-50 focus:px-4 focus:py-2 focus:bg-blue-600 focus:text-white focus:rounded-md">Skip to content</a>
+
+    <header class="h-16 bg-white border-b border-gray-200 flex items-center justify-between px-6 shrink-0 z-30">
+        <div class="flex items-center space-x-3">
+            <div class="bg-blue-600 p-2 rounded-lg text-white">
+                <i class="fas fa-calendar-check text-xl"></i>
+            </div>
+            <h1 class="text-xl font-bold tracking-tight hidden sm:block">Faculty<span class="text-blue-600">Leave</span></h1>
+        </div>
+
+        <div class="flex items-center space-x-4">
+            <div class="text-right hidden md:block">
+                <p class="text-sm font-semibold" id="user-display-name">Dr. Sarah Jenkins</p>
+                <p class="text-xs text-gray-500" id="user-display-role">Senior Professor</p>
+            </div>
+            <div class="relative group">
+                <button class="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 border border-blue-200">
+                    <i class="fas fa-user"></i>
+                </button>
+                <div class="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-xl border border-gray-100 py-2 hidden group-hover:block z-50">
+                    <button onclick="switchRole('faculty')" class="w-full text-left px-4 py-2 text-sm hover:bg-gray-50 flex items-center"><i class="fas fa-user-graduate w-6"></i> Faculty View</button>
+                    <button onclick="switchRole('admin')" class="w-full text-left px-4 py-2 text-sm hover:bg-gray-50 flex items-center"><i class="fas fa-user-shield w-6"></i> Admin View</button>
+                    <hr class="my-1">
+                    <button class="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 flex items-center"><i class="fas fa-sign-out-alt w-6"></i> Logout</button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <div class="flex flex-1 overflow-hidden">
+        <aside class="w-64 bg-white border-r border-gray-200 flex flex-col hidden lg:flex">
+            <nav class="flex-1 py-6">
+                <div class="px-4 mb-4 text-xs font-semibold text-gray-400 uppercase tracking-wider">Menu</div>
+                
+                <div id="nav-links">
+                    <div id="faculty-nav">
+                        <button onclick="showView('fac-dashboard')" class="sidebar-link w-full flex items-center px-6 py-3 text-sm font-medium hover:bg-gray-50 transition-colors fac-dashboard-nav active">
+                            <i class="fas fa-th-large mr-3"></i> Dashboard
+                        </button>
+                        <button onclick="showView('fac-apply')" class="sidebar-link w-full flex items-center px-6 py-3 text-sm font-medium hover:bg-gray-50 transition-colors fac-apply-nav">
+                            <i class="fas fa-paper-plane mr-3"></i> Apply for Leave
+                        </button>
+                        <button onclick="showView('fac-history')" class="sidebar-link w-full flex items-center px-6 py-3 text-sm font-medium hover:bg-gray-50 transition-colors fac-history-nav">
+                            <i class="fas fa-history mr-3"></i> My Requests
+                        </button>
+                    </div>
+
+                    <div id="admin-nav" class="hidden">
+                        <button onclick="showView('adm-dashboard')" class="sidebar-link w-full flex items-center px-6 py-3 text-sm font-medium hover:bg-gray-50 transition-colors adm-dashboard-nav">
+                            <i class="fas fa-chart-line mr-3"></i> Admin Panel
+                        </button>
+                        <button onclick="showView('adm-pending')" class="sidebar-link w-full flex items-center px-6 py-3 text-sm font-medium hover:bg-gray-50 transition-colors adm-pending-nav">
+                            <i class="fas fa-clock mr-3"></i> Pending Approvals
+                            <span class="ml-auto bg-red-100 text-red-600 text-[10px] px-2 py-0.5 rounded-full" id="pending-badge">2</span>
+                        </button>
+                        <button onclick="showView('adm-reports')" class="sidebar-link w-full flex items-center px-6 py-3 text-sm font-medium hover:bg-gray-50 transition-colors adm-reports-nav">
+                            <i class="fas fa-file-alt mr-3"></i> Reports
+                        </button>
+                    </div>
+                </div>
+            </nav>
+            
+            <div class="p-6 border-t border-gray-100">
+                <div class="bg-blue-50 p-4 rounded-xl">
+                    <p class="text-xs font-bold text-blue-700 uppercase mb-1">Leave Balance</p>
+                    <div class="flex justify-between items-end">
+                        <h4 class="text-2xl font-bold text-blue-900" id="leave-balance">12</h4>
+                        <span class="text-xs text-blue-600 font-medium">days left</span>
+                    </div>
+                </div>
+            </div>
+        </aside>
+
+        <main id="main-dashboard" class="flex-1 overflow-y-auto p-4 md:p-8 relative">
+            
+            <!-- VIEW: FACULTY DASHBOARD -->
+            <section id="view-fac-dashboard" class="view-section space-y-6">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <h2 class="text-2xl font-bold">Welcome back, Dr. Jenkins</h2>
+                        <p class="text-gray-500">Overview of your leave status.</p>
+                    </div>
+                    <button onclick="showView('fac-apply')" class="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-semibold hover:bg-blue-700 shadow-lg shadow-blue-200 flex items-center">
+                        <i class="fas fa-plus mr-2"></i> New Application
+                    </button>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                    <div class="bg-white p-6 rounded-2xl border border-gray-200 shadow-sm">
+                        <p class="text-sm text-gray-500 font-medium">Total Taken</p>
+                        <p class="text-3xl font-bold mt-1">18</p>
+                    </div>
+                    <div class="bg-white p-6 rounded-2xl border border-gray-200 shadow-sm">
+                        <p class="text-sm text-gray-500 font-medium">Remaining</p>
+                        <p class="text-3xl font-bold mt-1 text-blue-600">12</p>
+                    </div>
+                    <div class="bg-white p-6 rounded-2xl border border-gray-200 shadow-sm border-l-4 border-l-yellow-400">
+                        <p class="text-sm text-gray-500 font-medium">Pending</p>
+                        <p class="text-3xl font-bold mt-1" id="fac-pending-count">2</p>
+                    </div>
+                    <div class="bg-white p-6 rounded-2xl border border-gray-200 shadow-sm border-l-4 border-l-green-400">
+                        <p class="text-sm text-gray-500 font-medium">Approved</p>
+                        <p class="text-3xl font-bold mt-1">15</p>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
+                    <div class="px-6 py-4 border-b border-gray-100 flex justify-between items-center">
+                        <h3 class="font-bold">Recent Leave Requests</h3>
+                        <button onclick="showView('fac-history')" class="text-blue-600 text-xs font-semibold hover:underline">View All</button>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left">
+                            <thead class="bg-gray-50 text-xs uppercase text-gray-400 font-bold">
+                                <tr>
+                                    <th class="px-6 py-3">Leave Type</th>
+                                    <th class="px-6 py-3">Dates</th>
+                                    <th class="px-6 py-3">Duration</th>
+                                    <th class="px-6 py-3">Status</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-gray-100" id="fac-recent-list"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- VIEW: APPLY FOR LEAVE -->
+            <section id="view-fac-apply" class="view-section hidden max-w-2xl mx-auto">
+                <div class="mb-8">
+                    <h2 class="text-2xl font-bold">New Leave Application</h2>
+                    <p class="text-gray-500">Fill in the details for your request.</p>
+                </div>
+
+                <div class="bg-white p-8 rounded-2xl border border-gray-200 shadow-sm">
+                    <form id="leave-form" class="space-y-6">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div>
+                                <label class="block text-sm font-semibold mb-2">Leave Type</label>
+                                <select id="leave_type" required class="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 focus:ring-2 focus:ring-blue-500 outline-none">
+                                    <option value="Casual">Casual Leave</option>
+                                    <option value="Sick">Sick Leave</option>
+                                    <option value="Earned">Earned Leave</option>
+                                    <option value="Maternity/Paternity">Maternity/Paternity</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-semibold mb-2">Total Days</label>
+                                <input id="days" type="number" min="1" required class="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 focus:ring-2 focus:ring-blue-500 outline-none">
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div>
+                                <label class="block text-sm font-semibold mb-2">Start Date</label>
+                                <input id="start_date" type="date" required class="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 focus:ring-2 focus:ring-blue-500 outline-none">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-semibold mb-2">End Date</label>
+                                <input id="end_date" type="date" required class="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 focus:ring-2 focus:ring-blue-500 outline-none">
+                            </div>
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-semibold mb-2">Reason</label>
+                            <textarea id="reason" rows="4" required class="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 focus:ring-2 focus:ring-blue-500 outline-none" placeholder="Draft your reason here..."></textarea>
+                        </div>
+
+                        <div class="flex items-center space-x-4 pt-4">
+                            <button type="submit" class="bg-blue-600 text-white px-8 py-3 rounded-xl font-bold hover:bg-blue-700 shadow-lg shadow-blue-200 flex-1">
+                                Submit Application
+                            </button>
+                            <button type="button" onclick="showView('fac-dashboard')" class="bg-gray-100 text-gray-700 px-8 py-3 rounded-xl font-bold hover:bg-gray-200">
+                                Cancel
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </section>
+
+            <!-- VIEW: LEAVE HISTORY -->
+            <section id="view-fac-history" class="view-section hidden space-y-6">
+                <div class="flex items-center space-x-4">
+                    <button onclick="showView('fac-dashboard')" class="w-10 h-10 rounded-full border border-gray-200 flex items-center justify-center hover:bg-gray-100 transition-colors">
+                        <i class="fas fa-arrow-left text-sm text-gray-500"></i>
+                    </button>
+                    <div>
+                        <h2 class="text-2xl font-bold">My Leave History</h2>
+                        <p class="text-sm text-gray-500">View and track all your past requests.</p>
+                    </div>
+                </div>
+                <div class="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left">
+                            <thead class="bg-gray-50 text-xs uppercase text-gray-400 font-bold">
+                                <tr>
+                                    <th class="px-6 py-4">Type</th>
+                                    <th class="px-6 py-4">Duration</th>
+                                    <th class="px-6 py-4">Reason</th>
+                                    <th class="px-6 py-4">Status</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-gray-100" id="fac-history-list"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- VIEW: ADMIN DASHBOARD -->
+            <section id="view-adm-dashboard" class="view-section hidden space-y-8">
+                <div>
+                    <h2 class="text-2xl font-bold">Administrator Panel</h2>
+                    <p class="text-gray-500">System-wide leave metrics.</p>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div class="bg-white p-6 rounded-2xl border border-gray-200 shadow-sm">
+                        <div class="flex items-center justify-between mb-4">
+                            <div class="w-10 h-10 bg-orange-100 text-orange-600 rounded-lg flex items-center justify-center"><i class="fas fa-clock"></i></div>
+                        </div>
+                        <h4 class="text-3xl font-bold" id="adm-pending-count">02</h4>
+                        <p class="text-gray-500 text-sm mt-1">Pending Approvals</p>
+                    </div>
+                    <div class="bg-white p-6 rounded-2xl border border-gray-200 shadow-sm">
+                        <div class="flex items-center justify-between mb-4">
+                            <div class="w-10 h-10 bg-green-100 text-green-600 rounded-lg flex items-center justify-center"><i class="fas fa-check-circle"></i></div>
+                        </div>
+                        <h4 class="text-3xl font-bold">42</h4>
+                        <p class="text-gray-500 text-sm mt-1">Total Approved</p>
+                    </div>
+                    <div class="bg-white p-6 rounded-2xl border border-gray-200 shadow-sm">
+                        <div class="flex items-center justify-between mb-4">
+                            <div class="w-10 h-10 bg-blue-100 text-blue-600 rounded-lg flex items-center justify-center"><i class="fas fa-users"></i></div>
+                        </div>
+                        <h4 class="text-3xl font-bold">12</h4>
+                        <p class="text-gray-500 text-sm mt-1">Active Leaves</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- VIEW: ADMIN PENDING -->
+            <section id="view-adm-pending" class="view-section hidden space-y-6">
+                <div>
+                    <h2 class="text-2xl font-bold">Pending Approval Requests</h2>
+                    <p class="text-gray-500">Review leave applications from faculty members.</p>
+                </div>
+                <div class="space-y-4" id="adm-pending-list"></div>
+            </section>
+
+        </main>
+    </div>
+
+    <!-- Toast -->
+    <div id="toast" class="fixed bottom-8 right-8 bg-slate-900 text-white px-6 py-4 rounded-xl shadow-2xl translate-y-24 transition-transform duration-300 z-50 flex items-center space-x-3">
+        <div id="toast-icon" class="text-green-400"><i class="fas fa-check-circle"></i></div>
+        <div id="toast-message" class="text-sm font-medium">Operation successful!</div>
+    </div>
+
+    <script>
+        // App State
+        let currentRole = 'faculty';
+        let leaves = [
+            { id: 'LV001', faculty: 'Dr. Sarah Jenkins', type: 'Sick', start: '2026-02-10', end: '2026-02-12', days: 2, reason: 'Recovering from a severe seasonal flu.', appliedOn: '2026-02-08', status: 'Approved' },
+            { id: 'LV003', faculty: 'Prof. Michael Brown', type: 'Earned', start: '2026-03-01', end: '2026-03-05', days: 5, reason: 'Attending an international AI conference.', appliedOn: '2026-02-20', status: 'Pending' },
+            { id: 'LV004', faculty: 'Dr. Emily Watson', type: 'Casual', start: '2026-03-28', end: '2026-03-28', days: 1, reason: 'Personal family matter requiring presence.', appliedOn: '2026-02-22', status: 'Pending' }
+        ];
+
+        // --- CORE UI LOGIC ---
+        const showToast = (message, type = 'success') => {
+            const toast = document.getElementById('toast');
+            document.getElementById('toast-message').innerText = message;
+            toast.classList.remove('translate-y-24');
+            setTimeout(() => toast.classList.add('translate-y-24'), 3000);
+        };
+
+        const showView = (viewName) => {
+            document.querySelectorAll('.view-section').forEach(sec => sec.classList.add('hidden'));
+            document.getElementById(`view-${viewName}`).classList.remove('hidden');
+            document.querySelectorAll('.sidebar-link').forEach(link => link.classList.remove('active'));
+            const activeLink = document.querySelector(`.${viewName}-nav`);
+            if(activeLink) activeLink.classList.add('active');
+            if (viewName === 'fac-dashboard' || viewName === 'fac-history') renderFacultyLists();
+            if (viewName === 'adm-pending') renderAdminPending();
+        };
+
+        const switchRole = (role) => {
+            currentRole = role;
+            document.getElementById('user-display-name').innerText = role === 'faculty' ? 'Dr. Sarah Jenkins' : 'Dean Albert Sterling';
+            document.getElementById('user-display-role').innerText = role === 'faculty' ? 'Senior Professor' : 'Chief Administrator';
+            document.getElementById('faculty-nav').classList.toggle('hidden', role !== 'faculty');
+            document.getElementById('admin-nav').classList.toggle('hidden', role !== 'admin');
+            showView(role === 'faculty' ? 'fac-dashboard' : 'adm-dashboard');
+            showToast(`Switched to ${role} view`);
+        };
+
+        const renderFacultyLists = () => {
+            const historyBody = document.getElementById('fac-history-list');
+            const recentBody = document.getElementById('fac-recent-list');
+            const myLeaves = leaves.filter(l => l.faculty === 'Dr. Sarah Jenkins').reverse();
+            
+            document.getElementById('fac-pending-count').innerText = myLeaves.filter(l => l.status === 'Pending').length;
+
+            historyBody.innerHTML = myLeaves.map(l => `
+                <tr class="hover:bg-gray-50">
+                    <td class="px-6 py-4 font-semibold">${l.type}</td>
+                    <td class="px-6 py-4 text-sm">${l.days} days</td>
+                    <td class="px-6 py-4 text-sm text-gray-500 truncate max-w-[200px]">${l.reason}</td>
+                    <td class="px-6 py-4"><span class="px-3 py-1 rounded-full text-[10px] font-bold uppercase ${l.status === 'Approved' ? 'bg-green-100 text-green-600' : 'bg-yellow-100 text-yellow-600'}">${l.status}</span></td>
+                </tr>
+            `).join('');
+
+            recentBody.innerHTML = myLeaves.slice(0, 5).map(l => `
+                <tr>
+                    <td class="px-6 py-4 font-semibold">${l.type}</td>
+                    <td class="px-6 py-4 text-sm text-gray-500">${l.start}</td>
+                    <td class="px-6 py-4 text-sm">${l.days} days</td>
+                    <td class="px-6 py-4"><span class="px-3 py-1 rounded-full text-[10px] font-bold uppercase ${l.status === 'Approved' ? 'bg-green-100 text-green-600' : 'bg-yellow-100 text-yellow-600'}">${l.status}</span></td>
+                </tr>
+            `).join('');
+        };
+
+        const renderAdminPending = () => {
+            const container = document.getElementById('adm-pending-list');
+            const pending = leaves.filter(l => l.status === 'Pending');
+            document.getElementById('pending-badge').innerText = pending.length;
+            document.getElementById('adm-pending-count').innerText = pending.length.toString().padStart(2, '0');
+
+            if (pending.length === 0) {
+                container.innerHTML = `<div class="p-12 text-center text-gray-400 bg-white rounded-2xl border border-dashed border-gray-200">No pending requests found</div>`;
+                return;
+            }
+
+            container.innerHTML = pending.map(l => `
+                <div class="bg-white p-6 rounded-2xl border border-gray-200 shadow-sm space-y-4">
+                    <div class="flex flex-col md:flex-row md:items-center justify-between gap-6">
+                        <div class="flex items-start space-x-4">
+                            <div class="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center text-blue-600 shrink-0"><i class="fas fa-user-tie"></i></div>
+                            <div>
+                                <h4 class="font-bold text-lg">${l.faculty}</h4>
+                                <p class="text-sm text-gray-500">${l.type} Leave for <span class="text-slate-900 font-medium">${l.days} days</span></p>
+                                <p class="text-xs text-gray-400 mt-1">${l.start} to ${l.end}</p>
+                            </div>
+                        </div>
+                        <div class="flex items-center space-x-2 shrink-0">
+                            <button onclick="updateStatus('${l.id}', 'Approved')" class="px-4 py-2 bg-green-600 text-white rounded-lg text-sm font-bold hover:bg-green-700">Approve</button>
+                            <button onclick="updateStatus('${l.id}', 'Rejected')" class="px-4 py-2 bg-red-100 text-red-600 rounded-lg text-sm font-bold hover:bg-red-200">Reject</button>
+                        </div>
+                    </div>
+                    <div class="bg-gray-50 p-3 rounded-lg border border-gray-100 text-sm italic text-gray-600">"${l.reason}"</div>
+                </div>
+            `).join('');
+        };
+
+        const updateStatus = (id, newStatus) => {
+            const index = leaves.findIndex(l => l.id === id);
+            if (index !== -1) {
+                leaves[index].status = newStatus;
+                renderAdminPending();
+                showToast(`Request ${id} ${newStatus}`);
+            }
+        };
+
+        document.getElementById('leave-form').addEventListener('submit', (e) => {
+            e.preventDefault();
+            leaves.push({
+                id: 'LV' + Math.floor(1000 + Math.random() * 9000),
+                faculty: 'Dr. Sarah Jenkins',
+                type: document.getElementById('leave_type').value,
+                start: document.getElementById('start_date').value,
+                end: document.getElementById('end_date').value,
+                days: document.getElementById('days').value,
+                reason: document.getElementById('reason').value,
+                appliedOn: new Date().toISOString().split('T')[0],
+                status: 'Pending'
+            });
+            showToast("Application submitted successfully!");
+            e.target.reset();
+            showView('fac-dashboard');
+        });
+
+        window.onload = () => renderFacultyLists();
+    </script>
+</body>
+</html>
